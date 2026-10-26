@@ -1,17 +1,15 @@
-# Visualizador de Indicadores - Departamento de Nariño
+# 🇨🇴 Observatorio de Actividad Económica y Social por Departamentos
 
-Aplicación web interactiva desarrollada en Python y Streamlit para el análisis y visualización de datos socioeconómicos y territoriales del departamento de Nariño, Colombia.
+Aplicación web desarrollada en Python y Streamlit para el análisis dinámico de datos territoriales de Colombia, consumiendo directamente las API abiertas SODA de **datos.gov.co**.
 
-## 🚀 Características
-* **Análisis Exploratorio:** Indicadores clave y tableros interactivos.
-* **Visualización Espacial:** Mapas dinámicos y gráficos integrados con Plotly y Folium.
-* **Filtros Personalizados:** Selección dinámica de municipios, periodos y variables.
+## 📌 Fuentes de Información en Tiempo Real
+* **PIB Departamental:** Precios constantes de 2015 (`kgyi-qc7j`).
+* **Homicidios y Seguridad:** Registros de MinDefensa (`m8fd-ahd9`).
+* **Inversión Pública:** Ejecución de recursos públicos del DNP (`wc86-9j4a`).
 
 ## 🛠️ Tecnologías Utilizadas
 * **Python 3.10+**
 * **Streamlit** (Interfaz y despliegue)
-* **Pandas / NumPy** (Procesamiento de datos)
-* **Plotly / Folium / GeoPandas** (Visualización y cartografía)
-
-## 📌 Despliegue
-La aplicación se encuentra desplegada y disponible públicamente en Streamlit Community Cloud.
+* **Pandas / NumPy** (Procesamiento y agregación)
+* **Plotly Express** (Visualización interactiva)
+* **SODA API / Requests** (Consumo de datos abiertos)
