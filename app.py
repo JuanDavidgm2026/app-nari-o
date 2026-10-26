@@ -1,7 +1,5 @@
 # ============================================================
 # OBSERVATORIO ECONÓMICO Y SOCIAL · STREAMLIT
-# EDA · PCA · K-Means · Mapas · Moran/LISA · VAR/VECM
-# Ridge · Lasso · SVR · MLP · XAI · Simulación · Focus Nariño
 # ============================================================
 
 import streamlit as st
@@ -32,24 +30,93 @@ from esda.moran import Moran, Moran_Local
 warnings.filterwarnings("ignore")
 
 # ============================================================
-# CONFIG PÁGINA + TEMA OSCURO
+# CONFIG + TEMA ALTO CONTRASTE
 # ============================================================
 st.set_page_config(
     page_title="Observatorio Económico y Social",
+    page_icon="🇨🇴",
     layout="wide",
     initial_sidebar_state="expanded",
 )
 
 st.markdown("""
 <style>
-    .stApp { background-color: #0F172A; color: #E2E8F0; }
-    section[data-testid="stSidebar"] { background-color: #1E293B; }
-    h1, h2, h3 { color: #00E5FF !important; }
-    .stMetric { background-color: #1E293B; border-radius: 8px; padding: 8px; }
-    div[data-testid="stTabs"] button { color: #94A3B8; }
-    div[data-testid="stTabs"] button[aria-selected="true"] { color: #00E5FF; }
+.stApp { background-color: #0B1220 !important; color: #F1F5F9 !important; }
+
+section[data-testid="stSidebar"] {
+    background-color: #111827 !important;
+    border-right: 1px solid #1F2937;
+}
+section[data-testid="stSidebar"] * { color: #E5E7EB !important; }
+section[data-testid="stSidebar"] .stMarkdown h1,
+section[data-testid="stSidebar"] .stMarkdown h2,
+section[data-testid="stSidebar"] .stMarkdown h3 { color: #22D3EE !important; }
+
+h1, h2, h3, h4 { color: #22D3EE !important; font-weight: 700 !important; }
+.stCaption, [data-testid="stCaption"] { color: #94A3B8 !important; }
+p, span, label, .stMarkdown, .stText { color: #E2E8F0 !important; }
+
+div[data-baseweb="select"] > div {
+    background-color: #1F2937 !important;
+    border: 1px solid #374151 !important;
+    color: #F8FAFC !important;
+}
+.stSlider [data-baseweb="slider"] div[role="slider"] {
+    background-color: #22D3EE !important;
+}
+
+.stButton > button {
+    background: linear-gradient(90deg, #0891B2 0%, #7C3AED 100%) !important;
+    color: #FFFFFF !important;
+    border: none !important;
+    border-radius: 8px !important;
+    font-weight: 600 !important;
+    box-shadow: 0 2px 8px rgba(8, 145, 178, 0.35);
+}
+.stButton > button:hover {
+    filter: brightness(1.12);
+    box-shadow: 0 4px 14px rgba(124, 58, 237, 0.45);
+}
+
+button[data-baseweb="tab"] {
+    color: #94A3B8 !important;
+    font-weight: 600 !important;
+}
+button[data-baseweb="tab"][aria-selected="true"] {
+    color: #22D3EE !important;
+    border-bottom: 3px solid #22D3EE !important;
+}
+
+div[data-testid="stMetric"] {
+    background-color: #1E293B;
+    border: 1px solid #334155;
+    border-radius: 10px;
+    padding: 12px 14px;
+}
+div[data-testid="stMetric"] label { color: #94A3B8 !important; }
+div[data-testid="stMetric"] [data-testid="stMetricValue"] { color: #F8FAFC !important; }
+
+.stAlert {
+    background-color: #1E293B !important;
+    color: #F1F5F9 !important;
+    border: 1px solid #334155 !important;
+}
+[data-testid="stDataFrame"] {
+    border: 1px solid #334155;
+    border-radius: 8px;
+}
+hr { border-color: #334155 !important; }
+footer { visibility: hidden; }
 </style>
 """, unsafe_allow_html=True)
+
+PLOT_LAYOUT = dict(
+    template="plotly_dark",
+    paper_bgcolor="#0B1220",
+    plot_bgcolor="#111827",
+    font=dict(color="#E2E8F0", size=13),
+    title_font=dict(color="#22D3EE", size=16),
+)
 
 # ============================================================
 # NORMALIZACIÓN
@@ -94,7 +161,7 @@ def _match_geo_name(depto):
     return mapa.get(depto, depto)
 
 # ============================================================
-# CARGA SOLO DATOS REALES (caché Streamlit)
+# CARGA DATOS REALES
 # ============================================================
 def _fetch(url, limit=100000, timeout=70):
     try:
@@ -226,7 +293,7 @@ def cargar_todo():
         ]]
     partes = [p for p in partes if p is not None and not p.empty]
     if not partes:
-        raise RuntimeError("No se cargó ningún indicador real. Revisa la conexión.")
+        raise RuntimeError("No se cargó ningún indicador real.")
     df = pd.concat(partes, ignore_index=True)
     df["anio"] = pd.to_numeric(df["anio"], errors="coerce")
     df = df.dropna(subset=["departamento", "anio", "valor"])
@@ -276,8 +343,13 @@ def lags_seguros(nobs, neqs, solicitado=2):
     safe = max(1, (nobs - neqs - 1) // max(neqs, 1))
     return max(1, min(int(solicitado), safe, 3))
 
+def style_fig(fig):
+    if fig is not None:
+        fig.update_layout(**PLOT_LAYOUT)
+    return fig
+
 # ============================================================
-# MÓDULOS ANALÍTICOS (misma lógica)
+# MÓDULOS ANALÍTICOS
 # ============================================================
 def eda(DF_LONG, PANEL, lista_inds, deptos, inds, a1, a2):
     d = filtrar(DF_LONG, deptos, inds or lista_inds, a1, a2)
@@ -310,7 +382,8 @@ def eda(DF_LONG, PANEL, lista_inds, deptos, inds, a1, a2):
     if len(cols) >= 2:
         fig = px.imshow(panel[cols].corr(), text_auto=".2f", color_continuous_scale="RdBu_r",
                         title="Correlación (datos reales)", aspect="auto")
-        fig.update_layout(template="plotly_dark", height=420)
+        fig = style_fig(fig)
+        fig.update_layout(height=420)
     return info + res.to_markdown(index=False), fig
 
 def pca_fn(PANEL, a1, a2):
@@ -335,14 +408,14 @@ def pca_fn(PANEL, a1, a2):
     mask = ~p_clean["es_narino"]
     fig.add_trace(go.Scatter(
         x=p_clean.loc[mask, "PC1"], y=p_clean.loc[mask, "PC2"], mode="markers",
-        marker=dict(size=7, color="#64748B", opacity=0.6), name="Otros",
+        marker=dict(size=7, color="#64748B", opacity=0.7), name="Otros",
         text=p_clean.loc[mask, "departamento"]
     ))
     if p_clean["es_narino"].any():
         fig.add_trace(go.Scatter(
             x=p_clean.loc[p_clean["es_narino"], "PC1"],
             y=p_clean.loc[p_clean["es_narino"], "PC2"],
-            mode="markers+text", marker=dict(size=14, color="#00E5FF", symbol="star"),
+            mode="markers+text", marker=dict(size=14, color="#22D3EE", symbol="star"),
             name="Nariño", text=["Nariño"] * int(p_clean["es_narino"].sum()),
             textposition="top center"
         ))
@@ -351,13 +424,15 @@ def pca_fn(PANEL, a1, a2):
         fig.add_trace(go.Scatter(
             x=[0, loadings[i, 0] * 2.2], y=[0, loadings[i, 1] * 2.2],
             mode="lines+text", text=["", col], textposition="top center",
-            line=dict(color="#7C4DFF", width=1.8), showlegend=False
+            line=dict(color="#A78BFA", width=2), showlegend=False
         ))
     fig.update_layout(
-        title="Biplot PCA – Nariño", xaxis_title=f"PC1 ({var[0]*100:.1f}%)",
-        yaxis_title=f"PC2 ({var[1]*100:.1f}%)", template="plotly_dark", height=500
+        title="Biplot PCA – Nariño",
+        xaxis_title=f"PC1 ({var[0]*100:.1f}%)",
+        yaxis_title=f"PC2 ({var[1]*100:.1f}%)",
+        height=500
     )
-    return texto, fig
+    return texto, style_fig(fig)
 
 def kmeans_fn(PANEL, a1, a2, k):
     p = PANEL[(PANEL["anio"] >= a1) & (PANEL["anio"] <= a2)]
@@ -378,7 +453,8 @@ def kmeans_fn(PANEL, a1, a2, k):
         agg, x=xcol, y=ycol, color="Cluster", size="size",
         hover_name="departamento", title=f"K-Means k={k}", color_continuous_scale="Viridis"
     )
-    fig.update_layout(template="plotly_dark", height=470)
+    fig.update_layout(height=470)
+    fig = style_fig(fig)
     cl = agg.loc[agg["departamento"] == "Nariño", "Cluster"].values
     return f"K-Means k={k}. Nariño → Cluster {cl[0] if len(cl) else 'N/D'}", fig
 
@@ -387,16 +463,14 @@ def mapa_fn(DF_LONG, GEOJSON, ind, anio):
     if anio_use is None:
         fig = go.Figure()
         fig.add_annotation(text=f"Sin datos de {ind}", xref="paper", yref="paper",
-                           x=0.5, y=0.5, showarrow=False, font=dict(color="white", size=14))
-        fig.update_layout(template="plotly_dark", paper_bgcolor="#0F172A", height=400)
-        return fig
+                           x=0.5, y=0.5, showarrow=False, font=dict(color="#F1F5F9", size=14))
+        return style_fig(fig)
     d = DF_LONG[(DF_LONG["indicador"] == ind) & (DF_LONG["anio"] == anio_use)].copy()
     d = d.dropna(subset=["valor", "departamento"])
     if d.empty:
         fig = go.Figure()
         fig.add_annotation(text="Sin filas", xref="paper", yref="paper", x=0.5, y=0.5, showarrow=False)
-        fig.update_layout(template="plotly_dark", height=400)
-        return fig
+        return style_fig(fig)
     nota = f" (ajustado desde {anio})" if anio_use != int(anio) else ""
     if GEOJSON is not None:
         try:
@@ -426,12 +500,9 @@ def mapa_fn(DF_LONG, GEOJSON, ind, anio):
                     color_continuous_scale="Viridis",
                     title=f"{ind} · {anio_use}{nota}"
                 )
-                fig.update_geos(fitbounds="locations", visible=False, bgcolor="#0F172A")
-                fig.update_layout(
-                    template="plotly_dark", paper_bgcolor="#0F172A",
-                    height=580, margin=dict(r=0, t=50, l=0, b=0)
-                )
-                return fig
+                fig.update_geos(fitbounds="locations", visible=False, bgcolor="#0B1220")
+                fig.update_layout(height=580, margin=dict(r=0, t=50, l=0, b=0))
+                return style_fig(fig)
         except Exception as e:
             print("Mapa error:", e)
     d2 = d.sort_values("valor", ascending=True)
@@ -440,9 +511,8 @@ def mapa_fn(DF_LONG, GEOJSON, ind, anio):
         title=f"{ind} · {anio_use}{nota} [barras]",
         color="valor", color_continuous_scale="Viridis"
     )
-    fig.update_layout(template="plotly_dark", paper_bgcolor="#0F172A",
-                      height=max(420, 16 * len(d2)))
-    return fig
+    fig.update_layout(height=max(420, 16 * len(d2)))
+    return style_fig(fig)
 
 def moran_fn(DF_LONG, ind, anio):
     anio_use = mejor_anio(DF_LONG, ind, int(anio))
@@ -466,7 +536,7 @@ def moran_fn(DF_LONG, ind, anio):
         lag = np.asarray(w.sparse @ y_std).flatten()
         quad = lisa.q
         labels_q = {1: "HH (hotspot)", 2: "LH", 3: "LL (coldspot)", 4: "HL"}
-        colors_q = {1: "#ef4444", 2: "#fbbf24", 3: "#3b82f6", 4: "#a78bfa"}
+        colors_q = {1: "#F87171", 2: "#FBBF24", 3: "#60A5FA", 4: "#C084FC"}
         nombres = list(d.index)
         fig = go.Figure()
         for q in [1, 2, 3, 4]:
@@ -477,7 +547,7 @@ def moran_fn(DF_LONG, ind, anio):
                 x=y_std[mask], y=lag[mask], mode="markers+text",
                 text=[nombres[i] if nombres[i] == "Nariño" else "" for i in range(n) if mask[i]],
                 textposition="top center",
-                marker=dict(size=10, color=colors_q[q], opacity=0.85),
+                marker=dict(size=11, color=colors_q[q], opacity=0.9),
                 name=labels_q[q]
             ))
         fig.add_hline(y=0, line_dash="dot", line_color="#64748B")
@@ -485,8 +555,7 @@ def moran_fn(DF_LONG, ind, anio):
         fig.update_layout(
             title=f"Diagrama de Moran / LISA – {ind} ({anio_use})",
             xaxis_title="Valor estandarizado", yaxis_title="Rezago espacial",
-            template="plotly_dark", paper_bgcolor="#0F172A", height=480,
-            legend=dict(orientation="h", y=1.08)
+            height=480, legend=dict(orientation="h", y=1.08)
         )
         nota = f" (año ajustado a {anio_use})" if anio_use != int(anio) else ""
         sig = (lisa.p_sim < 0.05).sum()
@@ -497,7 +566,7 @@ def moran_fn(DF_LONG, ind, anio):
             f"**LISA**: {sig}/{n} con p<0.05 · "
             f"HH={(quad==1).sum()} LL={(quad==3).sum()} LH={(quad==2).sum()} HL={(quad==4).sum()}"
         )
-        return texto, fig
+        return texto, style_fig(fig)
     except Exception as e:
         return f"Error Moran/LISA: {e}", None
 
@@ -537,9 +606,8 @@ def var_fn(DF_LONG, depto, inds, lags, tipo):
             fig = go.Figure()
             for i, col in enumerate(panel.columns):
                 fig.add_trace(go.Scatter(y=irf.irfs[:, i, 0], mode="lines+markers", name=f"Resp. {col}"))
-            fig.update_layout(title=f"IRF 5 periodos – {depto}", template="plotly_dark",
-                              paper_bgcolor="#0F172A", height=440)
-            return texto, fig
+            fig.update_layout(title=f"IRF 5 periodos – {depto}", height=440)
+            return texto, style_fig(fig)
         else:
             k_ar = max(1, min(max_safe - 1, 2)) if max_safe > 1 else 1
             while k_ar > 1 and nobs <= neqs * (k_ar + 1) + 2:
@@ -559,15 +627,15 @@ def var_fn(DF_LONG, depto, inds, lags, tipo):
                 fig.add_trace(go.Scatter(x=panel.index, y=s_norm, mode="lines+markers", name=c))
             fig.update_layout(
                 title=f"Series estandarizadas – {depto} (contexto VECM)",
-                template="plotly_dark", paper_bgcolor="#0F172A", height=440, yaxis_title="Z-score"
+                height=440, yaxis_title="Z-score"
             )
-            return texto, fig
+            return texto, style_fig(fig)
     except Exception as e:
         fig = go.Figure()
         for c in panel.columns:
             fig.add_trace(go.Scatter(x=panel.index, y=panel[c], mode="lines+markers", name=c))
-        fig.update_layout(title=f"Series – {depto}", template="plotly_dark", height=420)
-        return texto + f"\n⚠️ Error: `{e}`", fig
+        fig.update_layout(title=f"Series – {depto}", height=420)
+        return texto + f"\n⚠️ Error: `{e}`", style_fig(fig)
 
 def ml_fn(PANEL, target, preds, a1, a2, ar, al):
     p = PANEL[(PANEL["anio"] >= a1) & (PANEL["anio"] <= a2)].copy()
@@ -613,13 +681,13 @@ def ml_fn(PANEL, target, preds, a1, a2, ar, al):
     yt, yh = store[mejor]
     fig = go.Figure()
     fig.add_trace(go.Scatter(x=yt, y=yh, mode="markers", name="Pred",
-                             marker=dict(color="#00E5FF", size=8, opacity=0.75)))
+                             marker=dict(color="#22D3EE", size=9, opacity=0.85)))
     fig.add_trace(go.Scatter(
         x=[float(yt.min()), float(yt.max())], y=[float(yt.min()), float(yt.max())],
-        mode="lines", name="Ideal", line=dict(dash="dash", color="#7C4DFF")
+        mode="lines", name="Ideal", line=dict(dash="dash", color="#A78BFA", width=2)
     ))
-    fig.update_layout(title=f"Mejor: {mejor}", template="plotly_dark", height=430)
-    return res.to_markdown(index=False), fig
+    fig.update_layout(title=f"Mejor: {mejor}", height=430)
+    return res.to_markdown(index=False), style_fig(fig)
 
 def xai_fn(PANEL, target, preds, a1, a2):
     p = PANEL[(PANEL["anio"] >= a1) & (PANEL["anio"] <= a2)].copy()
@@ -643,8 +711,8 @@ def xai_fn(PANEL, target, preds, a1, a2):
     fig = px.bar(imp, x="Importancia", y="Variable", orientation="h",
                  title="XAI – Importancia (datos reales)", color="Importancia",
                  color_continuous_scale="Viridis")
-    fig.update_layout(template="plotly_dark", height=400)
-    return imp.to_markdown(index=False), fig
+    fig.update_layout(height=400)
+    return imp.to_markdown(index=False), style_fig(fig)
 
 def sim_fn(DF_LONG, depto, ind_s, ind_r, shock, anios):
     d = DF_LONG[DF_LONG["departamento"] == depto]
@@ -657,10 +725,7 @@ def sim_fn(DF_LONG, depto, ind_s, ind_r, shock, anios):
             f"Se necesitan ≥6 años en ambos indicadores.\n\n"
             f"**Cobertura en {depto}:**\n{disp.to_markdown()}"
         ), None
-    if ind_s in good and ind_r in good:
-        cols_use = [ind_s, ind_r] + [c for c in good if c not in (ind_s, ind_r)][:1]
-    else:
-        cols_use = good
+    cols_use = [ind_s, ind_r] + [c for c in good if c not in (ind_s, ind_r)][:1]
     panel = panel[cols_use].interpolate(limit_direction="both").dropna()
     nobs, neqs = panel.shape
     if nobs < 6:
@@ -683,26 +748,26 @@ def sim_fn(DF_LONG, depto, ind_s, ind_r, shock, anios):
         fig = go.Figure()
         fig.add_trace(go.Scatter(
             x=panel.index, y=panel[ind_r],
-            mode="lines+markers", name="Histórico", line=dict(color="#94A3B8")
+            mode="lines+markers", name="Histórico", line=dict(color="#94A3B8", width=2)
         ))
         fig.add_trace(go.Scatter(
             x=anios_f, y=base[:, idx_r],
             mode="lines", name="Proyección base",
-            line=dict(dash="dash", color="#00E5FF")
+            line=dict(dash="dash", color="#22D3EE", width=2)
         ))
         fig.add_trace(go.Scatter(
             x=anios_f, y=shock_f[:, idx_r],
             mode="lines", name=f"Shock {shock:+.0f}%",
-            line=dict(color="#7C4DFF", width=3)
+            line=dict(color="#A78BFA", width=3)
         ))
         fig.update_layout(
             title=f"Simulación de política – impacto en {ind_r} ({depto})",
-            template="plotly_dark", height=460
+            height=460
         )
         return (
             f"Shock **{shock:+.0f}%** en **{ind_s}** → respuesta de **{ind_r}** "
             f"a {anios} años (VAR, lags={res.k_ar}, nobs={nobs}, eqs={neqs})."
-        ), fig
+        ), style_fig(fig)
     except Exception as e:
         return f"Error en simulación: {e}", None
 
@@ -733,14 +798,14 @@ def focus_narino(DF_LONG, lista_inds):
     nac_t = DF_LONG[DF_LONG["indicador"] == ind0].groupby("anio")["valor"].mean().reset_index()
     fig = go.Figure()
     fig.add_trace(go.Scatter(x=nar_t["anio"], y=nar_t["valor"], mode="lines+markers",
-                             name="Nariño", line=dict(color="#00E5FF", width=3)))
+                             name="Nariño", line=dict(color="#22D3EE", width=3)))
     fig.add_trace(go.Scatter(x=nac_t["anio"], y=nac_t["valor"], mode="lines+markers",
-                             name="Nacional", line=dict(color="#7C4DFF", width=2, dash="dash")))
-    fig.update_layout(title=f"{ind0}: Nariño vs Nacional", template="plotly_dark", height=420)
-    return res.to_markdown(index=False), fig
+                             name="Nacional", line=dict(color="#A78BFA", width=2, dash="dash")))
+    fig.update_layout(title=f"{ind0}: Nariño vs Nacional", height=420)
+    return res.to_markdown(index=False), style_fig(fig)
 
 # ============================================================
-# APP STREAMLIT
+# APP
 # ============================================================
 DF_LONG = cargar_todo()
 GEOJSON = cargar_geojson()
@@ -755,13 +820,22 @@ anios_ok = anios_count[anios_count >= 2].index
 a1_def = int(min(anios_ok)) if len(anios_ok) else max(amin, 2015)
 a2_def = int(max(anios_ok)) if len(anios_ok) else amax
 
-st.title("🇨🇴 Observatorio Económico y Social")
+st.markdown(
+    """
+    <h1 style="color:#22D3EE; margin-bottom:0.2rem;">
+        🇨🇴 Observatorio Económico y Social
+    </h1>
+    <p style="color:#94A3B8; margin-top:0;">
+        Datos reales · Enfoque departamental · Prioridad Nariño
+    </p>
+    """,
+    unsafe_allow_html=True,
+)
 st.caption(
-    f"Solo datos reales · Indicadores: {', '.join(lista_inds)} · "
-    f"Periodo: {amin}–{amax} · Rango recomendado: {a1_def}–{a2_def}"
+    f"Indicadores: {', '.join(lista_inds)} · Periodo: {amin}–{amax} · "
+    f"Rango recomendado: {a1_def}–{a2_def}"
 )
 
-# ---------- Sidebar ----------
 with st.sidebar:
     st.header("Controles")
     depto = st.multiselect(
@@ -780,7 +854,6 @@ with st.sidebar:
     shock = st.slider("Shock %", -40, 40, 10, 1)
     anios_s = st.slider("Años proyección", 3, 8, 5, 1)
 
-# ---------- Tabs ----------
 tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs([
     "📊 EDA · PCA · Clustering",
     "🗺️ Econometría Espacial",
@@ -799,17 +872,17 @@ with tab1:
         txt, fig = eda(DF_LONG, PANEL, lista_inds, depto, inds, a1, a2)
         st.markdown(txt)
         if fig is not None:
-            st.plotly_chart(fig, use_container_width=True)
+            st.plotly_chart(fig, width="stretch")
     if run_pca:
         txt, fig = pca_fn(PANEL, a1, a2)
         st.markdown(txt)
         if fig is not None:
-            st.plotly_chart(fig, use_container_width=True)
+            st.plotly_chart(fig, width="stretch")
     if run_km:
         txt, fig = kmeans_fn(PANEL, a1, a2, k)
         st.markdown(txt)
         if fig is not None:
-            st.plotly_chart(fig, use_container_width=True)
+            st.plotly_chart(fig, width="stretch")
 
 with tab2:
     ind_m = st.selectbox("Indicador espacial", lista_inds, index=0, key="ind_m")
@@ -818,12 +891,12 @@ with tab2:
     run_moran = c2.button("Moran + LISA", type="primary", key="bmor")
     if run_mapa:
         fig = mapa_fn(DF_LONG, GEOJSON, ind_m, anio_m)
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig, width="stretch")
     if run_moran:
         txt, fig = moran_fn(DF_LONG, ind_m, anio_m)
         st.markdown(txt)
         if fig is not None:
-            st.plotly_chart(fig, use_container_width=True)
+            st.plotly_chart(fig, width="stretch")
 
 with tab3:
     d_ts = st.selectbox(
@@ -840,7 +913,7 @@ with tab3:
         txt, fig = var_fn(DF_LONG, d_ts, i_ts, lags, tipo)
         st.markdown(txt)
         if fig is not None:
-            st.plotly_chart(fig, use_container_width=True)
+            st.plotly_chart(fig, width="stretch")
 
 with tab4:
     tgt = st.selectbox(
@@ -858,12 +931,12 @@ with tab4:
         txt, fig = ml_fn(PANEL, tgt, prd, a1, a2, ar, al)
         st.markdown(txt)
         if fig is not None:
-            st.plotly_chart(fig, use_container_width=True)
+            st.plotly_chart(fig, width="stretch")
     if run_xai:
         txt, fig = xai_fn(PANEL, tgt, prd, a1, a2)
         st.markdown(txt)
         if fig is not None:
-            st.plotly_chart(fig, use_container_width=True)
+            st.plotly_chart(fig, width="stretch")
 
 with tab5:
     ds = st.selectbox(
@@ -885,14 +958,14 @@ with tab5:
         txt, fig = sim_fn(DF_LONG, ds, is_, ir, shock, anios_s)
         st.markdown(txt)
         if fig is not None:
-            st.plotly_chart(fig, use_container_width=True)
+            st.plotly_chart(fig, width="stretch")
 
 with tab6:
     if st.button("Actualizar dashboard Nariño", type="primary", key="bn"):
         txt, fig = focus_narino(DF_LONG, lista_inds)
         st.markdown(txt)
         if fig is not None:
-            st.plotly_chart(fig, use_container_width=True)
+            st.plotly_chart(fig, width="stretch")
 
 st.markdown("---")
 st.caption(
