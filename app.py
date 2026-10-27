@@ -43,24 +43,18 @@ st.markdown("""
     color: #F8FAFC !important;
 }
 
-/* ========== PANEL DE CONTROL (sidebar) sin rojo ========== */
+/* ========== SIDEBAR sin rojo ========== */
 section[data-testid="stSidebar"] {
     background-color: #0F172A !important;
     border-right: 1px solid #1E293B;
 }
-section[data-testid="stSidebar"] * {
-    color: #E2E8F0 !important;
-}
+section[data-testid="stSidebar"] * { color: #E2E8F0 !important; }
 section[data-testid="stSidebar"] h1,
 section[data-testid="stSidebar"] h2,
-section[data-testid="stSidebar"] h3 {
-    color: #67E8F9 !important;
-}
+section[data-testid="stSidebar"] h3 { color: #67E8F9 !important; }
 section[data-testid="stSidebar"] label,
 section[data-testid="stSidebar"] [data-testid="stWidgetLabel"],
-section[data-testid="stSidebar"] .stCaption {
-    color: #CBD5E1 !important;
-}
+section[data-testid="stSidebar"] .stCaption { color: #CBD5E1 !important; }
 section[data-testid="stSidebar"] div[data-baseweb="select"] > div {
     background-color: #1E293B !important;
     border: 1px solid #334155 !important;
@@ -72,32 +66,37 @@ section[data-testid="stSidebar"] [data-baseweb="tag"] {
     color: #CFFAFE !important;
     border: 1px solid #22D3EE !important;
 }
-section[data-testid="stSidebar"] [data-baseweb="tag"] span {
+section[data-testid="stSidebar"] [data-baseweb="tag"] span,
+section[data-testid="stSidebar"] [data-baseweb="tag"] div {
     color: #CFFAFE !important;
 }
-section[data-testid="stSidebar"] [data-baseweb="tag"] svg {
-    fill: #A5F3FC !important;
-}
-section[data-testid="stSidebar"] [data-baseweb="slider"] div[role="slider"] {
+section[data-testid="stSidebar"] [data-baseweb="tag"] svg { fill: #A5F3FC !important; }
+
+section[data-testid="stSidebar"] [data-baseweb="slider"] div[role="slider"],
+section[data-testid="stSidebar"] div[role="slider"] {
     background-color: #22D3EE !important;
     border-color: #22D3EE !important;
 }
-section[data-testid="stSidebar"] [data-baseweb="slider"] div[data-testid="stThumbValue"] {
+section[data-testid="stSidebar"] [data-baseweb="slider"] div[data-testid="stThumbValue"],
+section[data-testid="stSidebar"] [data-testid="stSliderThumbValue"] {
     color: #67E8F9 !important;
     background: #164E63 !important;
 }
 section[data-testid="stSidebar"] [data-baseweb="slider"] > div > div {
     background-color: #334155 !important;
 }
+section[data-testid="stSidebar"] [data-baseweb="slider"] > div > div > div {
+    background: #22D3EE !important;
+}
+section[data-testid="stSidebar"] [data-baseweb="slider"] div[style*="background"] {
+    background-color: #22D3EE !important;
+}
 section[data-testid="stSidebar"] [data-baseweb="slider"] [data-testid="stTickBarMin"],
 section[data-testid="stSidebar"] [data-baseweb="slider"] [data-testid="stTickBarMax"] {
     color: #94A3B8 !important;
 }
-section[data-testid="stSidebar"] div[role="slider"] {
-    background-color: #22D3EE !important;
-}
 
-/* ========== Contenido principal ========== */
+/* ========== Principal ========== */
 h1, h2, h3, h4 { color: #67E8F9 !important; font-weight: 700 !important; }
 .stCaption, [data-testid="stCaption"] { color: #94A3B8 !important; }
 p, span, label, .stMarkdown, .stText { color: #E2E8F0 !important; }
@@ -223,7 +222,6 @@ footer { visibility: hidden; }
     color: #94A3B8 !important;
     font-size: 0.9rem;
 }
-
 .tip-box {
     background: #0F172A;
     border: 1px solid #334155;
@@ -369,7 +367,7 @@ def cargar_educacion():
                 t = df[["departamento", "anio", api_col]].copy()
                 t["valor"] = pd.to_numeric(t[api_col], errors="coerce")
                 t = t.dropna(subset=["departamento", "anio", "valor"])
-                if t["valor"].max() <= 1.5:
+                if len(t) and t["valor"].max() <= 1.5:
                     t["valor"] = t["valor"] * 100
                 t["indicador"] = nombre
                 records.append(t[["departamento", "anio", "valor", "indicador"]])
@@ -470,6 +468,10 @@ def style_fig(fig):
     if fig is not None:
         fig.update_layout(**PLOT_LAYOUT)
     return fig
+
+def _es_educacion(nombre):
+    n = str(nombre)
+    return ("Educacion" in n) or ("Matricula" in n) or ("Matriculacion" in n)
 
 # ============================================================
 # MÓDULOS ANALÍTICOS
@@ -838,53 +840,79 @@ def xai_fn(PANEL, target, preds, a1, a2):
     return imp.to_markdown(index=False), style_fig(fig)
 
 def sim_fn(DF_LONG, depto, ind_s, ind_r, shock, anios):
+    """Simulación VAR con umbral flexible para indicadores de educación."""
     d = DF_LONG[DF_LONG["departamento"] == depto]
+    if d.empty:
+        return f"Sin datos para **{depto}**.", None
+
     panel = d.pivot_table(index="anio", columns="indicador", values="valor", aggfunc="sum")
-    good = [c for c in panel.columns if panel[c].notna().sum() >= 6]
-    if ind_s not in good or ind_r not in good:
-        disp = d.groupby("indicador")["anio"].agg(["min", "max", "count"])
+    cov = panel.notna().sum().sort_values(ascending=False)
+    disp = d.groupby("indicador")["anio"].agg(["min", "max", "count"])
+
+    min_s = 5 if _es_educacion(ind_s) else 6
+    min_r = 5 if _es_educacion(ind_r) else 6
+
+    def n_ok(col, min_n):
+        return col in panel.columns and int(panel[col].notna().sum()) >= min_n
+
+    if not n_ok(ind_s, min_s) or not n_ok(ind_r, min_r):
         return (
             f"No se puede simular **{ind_s} → {ind_r}** en **{depto}**.\n\n"
-            f"Se necesitan ≥6 años en ambos indicadores.\n\n"
-            f"**Cobertura en {depto}:**\n{disp.to_markdown()}"
+            f"Se necesitan al menos **{min_s}** años en el indicador del shock y "
+            f"**{min_r}** en el de respuesta.\n\n"
+            f"**Años disponibles en {depto}:**\n\n{disp.to_markdown()}\n\n"
+            f"**Sugerencia:** usa pares con más historia "
+            f"(p. ej. Recursos_DNP → PIB, o PIB → Homicidios), "
+            f"u otro departamento con más cobertura en educación."
         ), None
-    cols_use = [ind_s, ind_r] + [c for c in good if c not in (ind_s, ind_r)][:1]
-    panel = panel[cols_use].interpolate(limit_direction="both").dropna()
-    nobs, neqs = panel.shape
-    if nobs < 6:
-        return f"Solo {nobs} años útiles tras alinear series en {depto}.", None
+
+    cols_use = [ind_s, ind_r]
+    extras = [c for c in cov.index if c not in cols_use and cov[c] >= 5][:1]
+    cols_use = cols_use + extras
+
+    sub = panel[cols_use].copy()
+    sub = sub.interpolate(limit_direction="both", limit=2)
+    sub = sub.dropna()
+
+    nobs, neqs = sub.shape
+    if nobs < 5:
+        return (
+            f"Tras alinear **{ind_s}** y **{ind_r}** en **{depto}** quedan solo "
+            f"**{nobs}** años comunes. No alcanza para un VAR estable.\n\n"
+            f"{disp.to_markdown()}"
+        ), None
+
     max_safe = lags_seguros(nobs, neqs, solicitado=2)
     try:
-        model = VAR(panel)
+        model = VAR(sub)
         try:
             res = model.fit(maxlags=max_safe, ic="aic")
         except Exception:
             res = model.fit(maxlags=1)
-        base = res.forecast(panel.values[-res.k_ar:], steps=int(anios))
-        last = panel.values[-res.k_ar:].copy()
-        idx_s = list(panel.columns).index(ind_s)
+
+        base = res.forecast(sub.values[-res.k_ar:], steps=int(anios))
+        last = sub.values[-res.k_ar:].copy()
+        idx_s = list(sub.columns).index(ind_s)
         last[-1, idx_s] *= (1 + float(shock) / 100.0)
         shock_f = res.forecast(last, steps=int(anios))
-        idx_r = list(panel.columns).index(ind_r)
-        anios_f = list(range(int(panel.index.max()) + 1,
-                              int(panel.index.max()) + int(anios) + 1))
+        idx_r = list(sub.columns).index(ind_r)
+        anios_f = list(range(int(sub.index.max()) + 1, int(sub.index.max()) + int(anios) + 1))
+
         fig = go.Figure()
         fig.add_trace(go.Scatter(
-            x=panel.index, y=panel[ind_r],
-            mode="lines+markers", name="Histórico", line=dict(color="#94A3B8", width=2)
+            x=sub.index, y=sub[ind_r], mode="lines+markers", name="Histórico",
+            line=dict(color="#94A3B8", width=2)
         ))
         fig.add_trace(go.Scatter(
-            x=anios_f, y=base[:, idx_r],
-            mode="lines", name="Proyección base",
+            x=anios_f, y=base[:, idx_r], mode="lines", name="Proyección base",
             line=dict(dash="dash", color="#22D3EE", width=2)
         ))
         fig.add_trace(go.Scatter(
-            x=anios_f, y=shock_f[:, idx_r],
-            mode="lines", name=f"Shock {shock:+.0f}%",
+            x=anios_f, y=shock_f[:, idx_r], mode="lines", name=f"Shock {shock:+.0f}%",
             line=dict(color="#A78BFA", width=3)
         ))
         fig.update_layout(
-            title=f"Simulación de política – impacto en {ind_r} ({depto})",
+            title=f"Simulación – impacto en {ind_r} ({depto})",
             height=460
         )
         return (
@@ -996,7 +1024,7 @@ with st.expander("📘 Guía rápida de módulos", expanded=False):
 | **Econometría espacial** | Mapa y concentración geográfica (Moran / LISA) | Si un año no tiene dato, se usa el más cercano |
 | **Series de tiempo** | VAR / VECM, ADF e impulso-respuesta | 2–3 indicadores con historia larga |
 | **ML & XAI** | Ridge, Lasso, SVR, MLP e importancia de variables | Define un *target* (p. ej. PIB) |
-| **Simulador** | Escenarios *what-if* | Prueba Recursos_DNP → PIB en Nariño |
+| **Simulador** | Escenarios *what-if* | Recursos_DNP → PIB suele funcionar mejor que educación |
 | **Focus Nariño** | Tablero ejecutivo vs promedio nacional | Ideal para el informe del seminario |
     """)
 
@@ -1007,6 +1035,7 @@ with st.expander("📦 Fuentes e indicadores cargados", expanded=False):
 **Indicadores:** `{', '.join(lista_inds)}`
 
 Si un módulo avisa “pocos datos”, amplía el rango de años o reduce variables.
+La simulación con **Cobertura_Bruta_Educacion** solo funciona si ese departamento tiene ≥5 años en ese indicador.
     """)
     cov = DF_LONG.groupby("indicador").agg(
         Filas=("valor", "count"),
@@ -1166,8 +1195,8 @@ with tab4:
 
 with tab5:
     st.markdown(
-        '<div class="tip-box">🎯 <b>Simulación:</b> shock en un indicador (p. ej. inversión DNP) '
-        "y trayectoria proyectada de otro (p. ej. PIB).</div>",
+        '<div class="tip-box">🎯 <b>Simulación:</b> shock en un indicador y trayectoria de otro. '
+        "Educación necesita ≥5 años en el departamento; PIB/DNP suelen tener más historia.</div>",
         unsafe_allow_html=True,
     )
     ds = st.selectbox(
@@ -1196,20 +1225,4 @@ with tab5:
 
 with tab6:
     st.markdown(
-        '<div class="tip-box">📍 <b>Focus Nariño:</b> último valor, variación interanual '
-        "y comparación con el promedio nacional.</div>",
-        unsafe_allow_html=True,
-    )
-    if st.button("Actualizar dashboard Nariño", type="primary", key="bn"):
-        with st.spinner("Construyendo tablero de Nariño…"):
-            txt, fig = focus_narino(DF_LONG, lista_inds)
-        st.markdown(txt)
-        if fig is not None:
-            st.plotly_chart(fig, width="stretch")
-
-st.markdown("---")
-st.caption(
-    "Observatorio · Solo datos reales (datos.gov.co) · "
-    "Creadores: Jeison Ortega · Juan David Granja · Helmer Rivera · Francisco Quiroz · "
-    "Universidad de Nariño"
-)
+        '<div
