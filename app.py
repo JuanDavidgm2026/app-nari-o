@@ -29,9 +29,6 @@ from esda.moran import Moran, Moran_Local
 
 warnings.filterwarnings("ignore")
 
-# ============================================================
-# CONFIG + TEMA AMABLE / ALTO CONTRASTE
-# ============================================================
 st.set_page_config(
     page_title="Observatorio Económico y Social",
     page_icon="🇨🇴",
@@ -41,13 +38,11 @@ st.set_page_config(
 
 st.markdown("""
 <style>
-/* Fondo general: azul noche suave */
 .stApp {
     background: linear-gradient(180deg, #0B1220 0%, #0F172A 40%, #111827 100%) !important;
     color: #F8FAFC !important;
 }
 
-/* Sidebar */
 section[data-testid="stSidebar"] {
     background-color: #0F172A !important;
     border-right: 1px solid #1E293B;
@@ -57,12 +52,10 @@ section[data-testid="stSidebar"] h1,
 section[data-testid="stSidebar"] h2,
 section[data-testid="stSidebar"] h3 { color: #67E8F9 !important; }
 
-/* Títulos */
 h1, h2, h3, h4 { color: #67E8F9 !important; font-weight: 700 !important; }
 .stCaption, [data-testid="stCaption"] { color: #94A3B8 !important; }
 p, span, label, .stMarkdown, .stText { color: #E2E8F0 !important; }
 
-/* Controles */
 div[data-baseweb="select"] > div {
     background-color: #1E293B !important;
     border: 1px solid #334155 !important;
@@ -72,7 +65,6 @@ div[data-baseweb="select"] > div {
     background-color: #22D3EE !important;
 }
 
-/* Botones */
 .stButton > button {
     background: linear-gradient(90deg, #0E7490 0%, #6D28D9 100%) !important;
     color: #FFFFFF !important;
@@ -86,7 +78,6 @@ div[data-baseweb="select"] > div {
     box-shadow: 0 4px 16px rgba(109, 40, 217, 0.4);
 }
 
-/* Tabs */
 button[data-baseweb="tab"] {
     color: #94A3B8 !important;
     font-weight: 600 !important;
@@ -96,7 +87,6 @@ button[data-baseweb="tab"][aria-selected="true"] {
     border-bottom: 3px solid #67E8F9 !important;
 }
 
-/* Métricas */
 div[data-testid="stMetric"] {
     background-color: #1E293B;
     border: 1px solid #334155;
@@ -106,18 +96,45 @@ div[data-testid="stMetric"] {
 div[data-testid="stMetric"] label { color: #94A3B8 !important; }
 div[data-testid="stMetric"] [data-testid="stMetricValue"] { color: #F8FAFC !important; }
 
-/* Alertas / info (sin rojo agresivo) */
-.stAlert {
+/* Alertas e info: sin rojo */
+.stAlert, [data-testid="stAlert"] {
     background-color: #1E293B !important;
     color: #F1F5F9 !important;
     border: 1px solid #334155 !important;
 }
-div[data-testid="stNotification"],
-div[data-testid="stSuccess"] {
-    background-color: #134E4A !important;
-    color: #CCFBF1 !important;
-    border: 1px solid #2DD4BF !important;
+[data-testid="stNotificationContentInfo"],
+div[data-baseweb="notification"] {
+    background-color: #164E63 !important;
+    color: #CFFAFE !important;
+    border: 1px solid #22D3EE !important;
 }
+/* Error / warning de Streamlit → teal / ámbar (UI, no gráficos) */
+[data-testid="stException"],
+[data-testid="stNotificationContentError"],
+div[data-testid="stMarkdownContainer"] code {
+    color: #E2E8F0 !important;
+}
+[data-baseweb="notification"][kind="negative"],
+[data-testid="stNotificationContentError"] {
+    background-color: #134E4A !important;
+    border-color: #2DD4BF !important;
+    color: #CCFBF1 !important;
+}
+[data-testid="stNotificationContentWarning"],
+[data-baseweb="notification"][kind="warning"] {
+    background-color: #422006 !important;
+    border-color: #FBBF24 !important;
+    color: #FEF3C7 !important;
+}
+[data-testid="stNotificationContentSuccess"] {
+    background-color: #134E4A !important;
+    border-color: #2DD4BF !important;
+    color: #CCFBF1 !important;
+}
+
+/* Enlaces y acentos que a veces salen rojos */
+a { color: #67E8F9 !important; }
+a:hover { color: #A5F3FC !important; }
 
 [data-testid="stDataFrame"] {
     border: 1px solid #334155;
@@ -126,7 +143,6 @@ div[data-testid="stSuccess"] {
 hr { border-color: #334155 !important; }
 footer { visibility: hidden; }
 
-/* Caja de bienvenida */
 .intro-box {
     background: linear-gradient(135deg, #0F172A 0%, #1E293B 55%, #1E1B4B 100%);
     border: 1px solid #334155;
@@ -155,8 +171,15 @@ footer { visibility: hidden; }
     font-size: 0.8rem;
     margin: 0.2rem 0.3rem 0.15rem 0;
 }
+.authors {
+    margin-top: 0.85rem;
+    padding-top: 0.75rem;
+    border-top: 1px solid #334155;
+    color: #CBD5E1 !important;
+    font-size: 0.95rem;
+}
+.authors b { color: #A5F3FC !important; }
 
-/* Tips por pestaña */
 .tip-box {
     background: #0F172A;
     border: 1px solid #334155;
@@ -165,6 +188,13 @@ footer { visibility: hidden; }
     padding: 0.9rem 1.1rem;
     margin-bottom: 1rem;
     color: #CBD5E1 !important;
+}
+.route-box {
+    background: #111827;
+    border: 1px solid #334155;
+    border-radius: 12px;
+    padding: 0.85rem 1rem;
+    margin-bottom: 0.8rem;
 }
 </style>
 """, unsafe_allow_html=True)
@@ -177,9 +207,6 @@ PLOT_LAYOUT = dict(
     title_font=dict(color="#67E8F9", size=16),
 )
 
-# ============================================================
-# NORMALIZACIÓN
-# ============================================================
 def quitar_tildes(texto):
     if pd.isna(texto) or texto is None:
         return ""
@@ -219,9 +246,6 @@ def _match_geo_name(depto):
     }
     return mapa.get(depto, depto)
 
-# ============================================================
-# CARGA DATOS REALES
-# ============================================================
 def _fetch(url, limit=100000, timeout=70):
     try:
         r = requests.get(f"{url}?$limit={limit}", timeout=timeout)
@@ -373,9 +397,6 @@ def crear_panel_ancho(df):
     return df.pivot_table(index=["departamento", "anio"], columns="indicador",
                           values="valor", aggfunc="sum").reset_index()
 
-# ============================================================
-# HELPERS
-# ============================================================
 def filtrar(df, deptos=None, inds=None, a1=None, a2=None):
     d = df.copy()
     if deptos and "Todos" not in deptos:
@@ -407,16 +428,13 @@ def style_fig(fig):
         fig.update_layout(**PLOT_LAYOUT)
     return fig
 
-# ============================================================
-# MÓDULOS ANALÍTICOS
-# ============================================================
 def eda(DF_LONG, PANEL, lista_inds, deptos, inds, a1, a2):
     d = filtrar(DF_LONG, deptos, inds or lista_inds, a1, a2)
     info = ""
     if d.empty:
         d = filtrar(DF_LONG, deptos, inds or lista_inds, None, None)
         if d.empty:
-            return "⚠️ No hay datos para esa combinación.", None
+            return "Sin datos para esa combinación. Prueba ampliar años o 'Todos' en departamentos.", None
         info = f"*(Rango ampliado: {int(d.anio.min())}-{int(d.anio.max())})*\n\n"
     rows = []
     for ind, g in d.groupby("indicador"):
@@ -433,7 +451,7 @@ def eda(DF_LONG, PANEL, lista_inds, deptos, inds, a1, a2):
             "Años": f"{int(g.anio.min())}-{int(g.anio.max())}"
         })
     if not rows:
-        return "⚠️ Pocos datos para estadísticos.", None
+        return "Pocos datos para estadísticos.", None
     res = pd.DataFrame(rows)
     panel = crear_panel_ancho(d)
     cols = [c for c in panel.columns if c not in ["departamento", "anio"]]
@@ -449,12 +467,12 @@ def pca_fn(PANEL, a1, a2):
     p = PANEL[(PANEL["anio"] >= a1) & (PANEL["anio"] <= a2)].copy()
     cols = [c for c in p.columns if c not in ["departamento", "anio"]]
     if len(cols) < 2:
-        return "⚠️ Se necesitan ≥2 indicadores.", None
+        return "Se necesitan ≥2 indicadores.", None
     X = p[cols].dropna(thresh=2).fillna(p[cols].mean())
     if len(X) < 6:
         X = PANEL[cols].dropna(thresh=2).fillna(PANEL[cols].mean())
         if len(X) < 6:
-            return "⚠️ Datos insuficientes para PCA.", None
+            return "Datos insuficientes para PCA.", None
     Xs = StandardScaler().fit_transform(X)
     pca = PCA(n_components=2)
     comps = pca.fit_transform(Xs)
@@ -497,10 +515,10 @@ def kmeans_fn(PANEL, a1, a2, k):
     p = PANEL[(PANEL["anio"] >= a1) & (PANEL["anio"] <= a2)]
     cols = [c for c in p.columns if c not in ["departamento", "anio"]]
     if len(cols) < 2:
-        return "⚠️ ≥2 indicadores requeridos.", None
+        return "≥2 indicadores requeridos.", None
     agg = p.groupby("departamento")[cols].mean().dropna(thresh=2).fillna(p[cols].mean())
     if len(agg) < int(k):
-        return f"⚠️ Solo {len(agg)} departamentos. Reduce K.", None
+        return f"Solo {len(agg)} departamentos. Reduce K.", None
     Xs = StandardScaler().fit_transform(agg)
     labels = KMeans(n_clusters=int(k), random_state=42, n_init=10).fit_predict(Xs)
     agg = agg.copy()
@@ -576,11 +594,11 @@ def mapa_fn(DF_LONG, GEOJSON, ind, anio):
 def moran_fn(DF_LONG, ind, anio):
     anio_use = mejor_anio(DF_LONG, ind, int(anio))
     if anio_use is None:
-        return "⚠️ Sin datos de ese indicador.", None
+        return "Sin datos de ese indicador.", None
     d = DF_LONG[(DF_LONG["indicador"] == ind) & (DF_LONG["anio"] == anio_use)].copy()
     d = d.dropna(subset=["valor", "departamento"])
     if len(d) < 8:
-        return f"⚠️ Pocas observaciones ({len(d)}) para Moran.", None
+        return f"Pocas observaciones ({len(d)}) para Moran.", None
     try:
         d = d.set_index("departamento")
         y = d["valor"].values.astype(float)
@@ -632,18 +650,18 @@ def moran_fn(DF_LONG, ind, anio):
 def var_fn(DF_LONG, depto, inds, lags, tipo):
     d = DF_LONG[DF_LONG["departamento"] == depto]
     if d.empty:
-        return f"⚠️ Sin datos para {depto}.", None
+        return f"Sin datos para {depto}.", None
     panel = d.pivot_table(index="anio", columns="indicador", values="valor", aggfunc="sum")
     cols = [c for c in (inds or list(panel.columns)) if c in panel.columns]
     panel = panel[cols]
     good = [c for c in panel.columns if panel[c].notna().sum() >= 6]
     if len(good) < 2:
         disp = d.groupby("indicador")["anio"].agg(["min", "max", "count"])
-        return (f"⚠️ {depto}: se necesitan ≥2 indicadores con ≥6 años.\n\n{disp.to_markdown()}"), None
+        return (f"{depto}: se necesitan ≥2 indicadores con ≥6 años.\n\n{disp.to_markdown()}"), None
     panel = panel[good].interpolate(limit_direction="both").dropna()
     nobs, neqs = panel.shape
     if nobs < 6:
-        return f"⚠️ Solo {nobs} años útiles en {depto}.", None
+        return f"Solo {nobs} años útiles en {depto}.", None
     adf_rows = []
     for c in panel.columns:
         try:
@@ -694,16 +712,16 @@ def var_fn(DF_LONG, depto, inds, lags, tipo):
         for c in panel.columns:
             fig.add_trace(go.Scatter(x=panel.index, y=panel[c], mode="lines+markers", name=c))
         fig.update_layout(title=f"Series – {depto}", height=420)
-        return texto + f"\n⚠️ Error: `{e}`", style_fig(fig)
+        return texto + f"\nError: `{e}`", style_fig(fig)
 
 def ml_fn(PANEL, target, preds, a1, a2, ar, al):
     p = PANEL[(PANEL["anio"] >= a1) & (PANEL["anio"] <= a2)].copy()
     cols = [c for c in p.columns if c not in ["departamento", "anio"]]
     if target not in cols:
-        return f"⚠️ Target '{target}' no disponible. {cols}", None
+        return f"Target '{target}' no disponible. {cols}", None
     features = [c for c in (preds or cols) if c in cols and c != target] or [c for c in cols if c != target]
     if not features:
-        return "⚠️ No hay predictores.", None
+        return "No hay predictores.", None
     data = p[[target] + features].dropna(subset=[target])
     data[features] = data[features].fillna(data[features].mean())
     data = data.dropna()
@@ -711,7 +729,7 @@ def ml_fn(PANEL, target, preds, a1, a2, ar, al):
         data = PANEL[[target] + features].dropna(subset=[target])
         data[features] = data[features].fillna(data[features].mean()).dropna()
         if len(data) < 15:
-            return f"⚠️ Solo {len(data)} filas para ML.", None
+            return f"Solo {len(data)} filas para ML.", None
     X, y = data[features], data[target]
     Xtr, Xte, ytr, yte = train_test_split(X, y, test_size=0.25, random_state=42)
     modelos = {
@@ -734,7 +752,7 @@ def ml_fn(PANEL, target, preds, a1, a2, ar, al):
         except Exception:
             continue
     if not rows:
-        return "⚠️ Ningún modelo entrenó.", None
+        return "Ningún modelo entrenó.", None
     res = pd.DataFrame(rows)
     mejor = res.loc[res["R²"].idxmax(), "Modelo"]
     yt, yh = store[mejor]
@@ -752,7 +770,7 @@ def xai_fn(PANEL, target, preds, a1, a2):
     p = PANEL[(PANEL["anio"] >= a1) & (PANEL["anio"] <= a2)].copy()
     cols = [c for c in p.columns if c not in ["departamento", "anio"]]
     if target not in cols:
-        return f"⚠️ Target no disponible. {cols}", None
+        return f"Target no disponible. {cols}", None
     features = [c for c in (preds or cols) if c in cols and c != target] or [c for c in cols if c != target]
     data = p[[target] + features].dropna(subset=[target])
     data[features] = data[features].fillna(data[features].mean()).dropna()
@@ -760,7 +778,7 @@ def xai_fn(PANEL, target, preds, a1, a2):
         data = PANEL[[target] + features].dropna(subset=[target])
         data[features] = data[features].fillna(data[features].mean()).dropna()
     if len(data) < 12:
-        return f"⚠️ Solo {len(data)} filas para XAI.", None
+        return f"Solo {len(data)} filas para XAI.", None
     X, y = data[features], data[target]
     modelo = Ridge(alpha=1.0).fit(X, y)
     r = permutation_importance(modelo, X, y, n_repeats=10, random_state=42)
@@ -780,7 +798,7 @@ def sim_fn(DF_LONG, depto, ind_s, ind_r, shock, anios):
     if ind_s not in good or ind_r not in good:
         disp = d.groupby("indicador")["anio"].agg(["min", "max", "count"])
         return (
-            f"⚠️ No se puede simular **{ind_s} → {ind_r}** en **{depto}**.\n\n"
+            f"No se puede simular **{ind_s} → {ind_r}** en **{depto}**.\n\n"
             f"Se necesitan ≥6 años en ambos indicadores.\n\n"
             f"**Cobertura en {depto}:**\n{disp.to_markdown()}"
         ), None
@@ -788,7 +806,7 @@ def sim_fn(DF_LONG, depto, ind_s, ind_r, shock, anios):
     panel = panel[cols_use].interpolate(limit_direction="both").dropna()
     nobs, neqs = panel.shape
     if nobs < 6:
-        return f"⚠️ Solo {nobs} años útiles tras alinear series en {depto}.", None
+        return f"Solo {nobs} años útiles tras alinear series en {depto}.", None
     max_safe = lags_seguros(nobs, neqs, solicitado=2)
     try:
         model = VAR(panel)
@@ -833,7 +851,7 @@ def sim_fn(DF_LONG, depto, ind_s, ind_r, shock, anios):
 def focus_narino(DF_LONG, lista_inds):
     nar = DF_LONG[DF_LONG["departamento"] == "Nariño"]
     if nar.empty:
-        return "⚠️ No hay filas de Nariño.", None
+        return "No hay filas de Nariño.", None
     rows = []
     for ind in lista_inds:
         g = nar[nar["indicador"] == ind]
@@ -914,16 +932,42 @@ st.markdown(
             <span class="tag">{len(lista_deptos)} departamentos</span>
             <span class="tag">Solo datos reales</span>
         </p>
+        <div class="authors">
+            <b>Creadores:</b>
+            Jeison Ortega · Juan David Granja · Helmer Rivera · Francisco Quiroz
+        </div>
     </div>
     """,
     unsafe_allow_html=True,
 )
 
+# Interactividad: ruta sugerida
+ruta = st.radio(
+    "🧭 Elige una ruta de análisis (opcional)",
+    [
+        "Libre (exploro a mi ritmo)",
+        "1) Focus Nariño → EDA → Mapa",
+        "2) EDA → PCA → Clustering",
+        "3) Series (VAR) → Simulación de política",
+        "4) ML → XAI (interpretabilidad)",
+    ],
+    horizontal=False,
+    help="No bloquea ninguna pestaña: solo te orienta qué explorar primero.",
+)
+if ruta.startswith("1)"):
+    st.caption("Sugerencia: abre **📍 Focus Nariño**, luego **📊 EDA** y **🗺️ Espacial**.")
+elif ruta.startswith("2)"):
+    st.caption("Sugerencia: en **📊 EDA · PCA · Clustering** ejecuta los tres botones en orden.")
+elif ruta.startswith("3)"):
+    st.caption("Sugerencia: **📈 Series de Tiempo** (VAR) y después **🎯 Simulador**.")
+elif ruta.startswith("4)"):
+    st.caption("Sugerencia: **🤖 ML** con target PIB y luego **XAI**.")
+
 with st.expander("📘 Guía rápida de módulos", expanded=False):
     st.markdown("""
 | Pestaña | Para qué sirve | Tip práctico |
 |--------|----------------|--------------|
-| **EDA · PCA · Clustering** | Describir datos, correlaciones, reducir dimensiones y agrupar departamentos | Usa el rango de años recomendado |
+| **EDA · PCA · Clustering** | Describir datos, correlaciones, reducir dimensiones y agrupar | Usa el rango de años recomendado |
 | **Econometría espacial** | Mapa y concentración geográfica (Moran / LISA) | Si un año no tiene dato, se usa el más cercano |
 | **Series de tiempo** | VAR / VECM, ADF e impulso-respuesta | 2–3 indicadores con historia larga |
 | **ML & XAI** | Ridge, Lasso, SVR, MLP e importancia de variables | Define un *target* (p. ej. PIB) |
@@ -967,16 +1011,15 @@ with st.sidebar:
     st.markdown("---")
     st.subheader("Parámetros de modelos")
     k = st.slider("K clusters (K-Means)", 2, 6, 3, 1)
-    ar = st.slider("Alpha Ridge", 0.01, 30.0, 1.0, 0.1,
-                   help="Mayor alpha = más regularización.")
-    al = st.slider("Alpha Lasso", 0.001, 3.0, 0.1, 0.01,
-                   help="Lasso puede poner coeficientes en cero.")
-    lags = st.slider("Lags VAR", 1, 4, 2, 1,
-                     help="Se ajusta si hay pocas observaciones.")
+    ar = st.slider("Alpha Ridge", 0.01, 30.0, 1.0, 0.1)
+    al = st.slider("Alpha Lasso", 0.001, 3.0, 0.1, 0.01)
+    lags = st.slider("Lags VAR", 1, 4, 2, 1)
     shock = st.slider("Shock % (simulación)", -40, 40, 10, 1)
     anios_s = st.slider("Años de proyección", 3, 8, 5, 1)
     st.markdown("---")
     st.caption("💡 Tip: empieza por **Focus Nariño** y luego profundiza en EDA o simulación.")
+    st.markdown("---")
+    st.caption("**Equipo:** Jeison Ortega · Juan David Granja · Helmer Rivera · Francisco Quiroz")
 
 tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs([
     "📊 EDA · PCA · Clustering",
@@ -1137,10 +1180,9 @@ with tab6:
         st.markdown(txt)
         if fig is not None:
             st.plotly_chart(fig, width="stretch")
-        # (sin mensaje "Listo..." / st.success)
 
 st.markdown("---")
 st.caption(
-    "Observatorio · Solo datos reales (datos.gov.co) · EDA · PCA · Clustering · Mapas · "
-    "Moran/LISA · VAR/VECM · Ridge/Lasso/SVR/MLP · XAI · Simulación · Foco Nariño"
+    "Observatorio · Solo datos reales (datos.gov.co) · "
+    "Creadores: Jeison Ortega · Juan David Granja · Helmer Rivera · Francisco Quiroz"
 )
