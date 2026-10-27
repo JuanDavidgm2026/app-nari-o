@@ -43,15 +43,61 @@ st.markdown("""
     color: #F8FAFC !important;
 }
 
+/* ========== PANEL DE CONTROL (sidebar) sin rojo ========== */
 section[data-testid="stSidebar"] {
     background-color: #0F172A !important;
     border-right: 1px solid #1E293B;
 }
-section[data-testid="stSidebar"] * { color: #E2E8F0 !important; }
+section[data-testid="stSidebar"] * {
+    color: #E2E8F0 !important;
+}
 section[data-testid="stSidebar"] h1,
 section[data-testid="stSidebar"] h2,
-section[data-testid="stSidebar"] h3 { color: #67E8F9 !important; }
+section[data-testid="stSidebar"] h3 {
+    color: #67E8F9 !important;
+}
+section[data-testid="stSidebar"] label,
+section[data-testid="stSidebar"] [data-testid="stWidgetLabel"],
+section[data-testid="stSidebar"] .stCaption {
+    color: #CBD5E1 !important;
+}
+section[data-testid="stSidebar"] div[data-baseweb="select"] > div {
+    background-color: #1E293B !important;
+    border: 1px solid #334155 !important;
+    color: #F8FAFC !important;
+}
+section[data-testid="stSidebar"] span[data-baseweb="tag"],
+section[data-testid="stSidebar"] [data-baseweb="tag"] {
+    background-color: #155E75 !important;
+    color: #CFFAFE !important;
+    border: 1px solid #22D3EE !important;
+}
+section[data-testid="stSidebar"] [data-baseweb="tag"] span {
+    color: #CFFAFE !important;
+}
+section[data-testid="stSidebar"] [data-baseweb="tag"] svg {
+    fill: #A5F3FC !important;
+}
+section[data-testid="stSidebar"] [data-baseweb="slider"] div[role="slider"] {
+    background-color: #22D3EE !important;
+    border-color: #22D3EE !important;
+}
+section[data-testid="stSidebar"] [data-baseweb="slider"] div[data-testid="stThumbValue"] {
+    color: #67E8F9 !important;
+    background: #164E63 !important;
+}
+section[data-testid="stSidebar"] [data-baseweb="slider"] > div > div {
+    background-color: #334155 !important;
+}
+section[data-testid="stSidebar"] [data-baseweb="slider"] [data-testid="stTickBarMin"],
+section[data-testid="stSidebar"] [data-baseweb="slider"] [data-testid="stTickBarMax"] {
+    color: #94A3B8 !important;
+}
+section[data-testid="stSidebar"] div[role="slider"] {
+    background-color: #22D3EE !important;
+}
 
+/* ========== Contenido principal ========== */
 h1, h2, h3, h4 { color: #67E8F9 !important; font-weight: 700 !important; }
 .stCaption, [data-testid="stCaption"] { color: #94A3B8 !important; }
 p, span, label, .stMarkdown, .stText { color: #E2E8F0 !important; }
@@ -96,7 +142,6 @@ div[data-testid="stMetric"] {
 div[data-testid="stMetric"] label { color: #94A3B8 !important; }
 div[data-testid="stMetric"] [data-testid="stMetricValue"] { color: #F8FAFC !important; }
 
-/* Alertas e info: sin rojo */
 .stAlert, [data-testid="stAlert"] {
     background-color: #1E293B !important;
     color: #F1F5F9 !important;
@@ -108,14 +153,8 @@ div[data-baseweb="notification"] {
     color: #CFFAFE !important;
     border: 1px solid #22D3EE !important;
 }
-/* Error / warning de Streamlit → teal / ámbar (UI, no gráficos) */
-[data-testid="stException"],
 [data-testid="stNotificationContentError"],
-div[data-testid="stMarkdownContainer"] code {
-    color: #E2E8F0 !important;
-}
-[data-baseweb="notification"][kind="negative"],
-[data-testid="stNotificationContentError"] {
+[data-baseweb="notification"][kind="negative"] {
     background-color: #134E4A !important;
     border-color: #2DD4BF !important;
     color: #CCFBF1 !important;
@@ -132,7 +171,6 @@ div[data-testid="stMarkdownContainer"] code {
     color: #CCFBF1 !important;
 }
 
-/* Enlaces y acentos que a veces salen rojos */
 a { color: #67E8F9 !important; }
 a:hover { color: #A5F3FC !important; }
 
@@ -179,6 +217,12 @@ footer { visibility: hidden; }
     font-size: 0.95rem;
 }
 .authors b { color: #A5F3FC !important; }
+.authors .uni {
+    display: block;
+    margin-top: 0.35rem;
+    color: #94A3B8 !important;
+    font-size: 0.9rem;
+}
 
 .tip-box {
     background: #0F172A;
@@ -188,13 +232,6 @@ footer { visibility: hidden; }
     padding: 0.9rem 1.1rem;
     margin-bottom: 1rem;
     color: #CBD5E1 !important;
-}
-.route-box {
-    background: #111827;
-    border: 1px solid #334155;
-    border-radius: 12px;
-    padding: 0.85rem 1rem;
-    margin-bottom: 0.8rem;
 }
 </style>
 """, unsafe_allow_html=True)
@@ -207,6 +244,9 @@ PLOT_LAYOUT = dict(
     title_font=dict(color="#67E8F9", size=16),
 )
 
+# ============================================================
+# NORMALIZACIÓN
+# ============================================================
 def quitar_tildes(texto):
     if pd.isna(texto) or texto is None:
         return ""
@@ -246,6 +286,9 @@ def _match_geo_name(depto):
     }
     return mapa.get(depto, depto)
 
+# ============================================================
+# CARGA DATOS REALES
+# ============================================================
 def _fetch(url, limit=100000, timeout=70):
     try:
         r = requests.get(f"{url}?$limit={limit}", timeout=timeout)
@@ -428,6 +471,9 @@ def style_fig(fig):
         fig.update_layout(**PLOT_LAYOUT)
     return fig
 
+# ============================================================
+# MÓDULOS ANALÍTICOS
+# ============================================================
 def eda(DF_LONG, PANEL, lista_inds, deptos, inds, a1, a2):
     d = filtrar(DF_LONG, deptos, inds or lista_inds, a1, a2)
     info = ""
@@ -935,33 +981,12 @@ st.markdown(
         <div class="authors">
             <b>Creadores:</b>
             Jeison Ortega · Juan David Granja · Helmer Rivera · Francisco Quiroz
+            <span class="uni">Universidad de Nariño</span>
         </div>
     </div>
     """,
     unsafe_allow_html=True,
 )
-
-# Interactividad: ruta sugerida
-ruta = st.radio(
-    "🧭 Elige una ruta de análisis (opcional)",
-    [
-        "Libre (exploro a mi ritmo)",
-        "1) Focus Nariño → EDA → Mapa",
-        "2) EDA → PCA → Clustering",
-        "3) Series (VAR) → Simulación de política",
-        "4) ML → XAI (interpretabilidad)",
-    ],
-    horizontal=False,
-    help="No bloquea ninguna pestaña: solo te orienta qué explorar primero.",
-)
-if ruta.startswith("1)"):
-    st.caption("Sugerencia: abre **📍 Focus Nariño**, luego **📊 EDA** y **🗺️ Espacial**.")
-elif ruta.startswith("2)"):
-    st.caption("Sugerencia: en **📊 EDA · PCA · Clustering** ejecuta los tres botones en orden.")
-elif ruta.startswith("3)"):
-    st.caption("Sugerencia: **📈 Series de Tiempo** (VAR) y después **🎯 Simulador**.")
-elif ruta.startswith("4)"):
-    st.caption("Sugerencia: **🤖 ML** con target PIB y luego **XAI**.")
 
 with st.expander("📘 Guía rápida de módulos", expanded=False):
     st.markdown("""
@@ -1020,6 +1045,7 @@ with st.sidebar:
     st.caption("💡 Tip: empieza por **Focus Nariño** y luego profundiza en EDA o simulación.")
     st.markdown("---")
     st.caption("**Equipo:** Jeison Ortega · Juan David Granja · Helmer Rivera · Francisco Quiroz")
+    st.caption("Universidad de Nariño")
 
 tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs([
     "📊 EDA · PCA · Clustering",
@@ -1184,5 +1210,6 @@ with tab6:
 st.markdown("---")
 st.caption(
     "Observatorio · Solo datos reales (datos.gov.co) · "
-    "Creadores: Jeison Ortega · Juan David Granja · Helmer Rivera · Francisco Quiroz"
+    "Creadores: Jeison Ortega · Juan David Granja · Helmer Rivera · Francisco Quiroz · "
+    "Universidad de Nariño"
 )
