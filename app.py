@@ -1,5 +1,6 @@
 # ============================================================
 # OBSERVATORIO ECONÓMICO Y SOCIAL · STREAMLIT
+# Solo datos reales · Interfaz didáctica e interactiva
 # ============================================================
 
 import streamlit as st
@@ -30,7 +31,7 @@ from esda.moran import Moran, Moran_Local
 warnings.filterwarnings("ignore")
 
 # ============================================================
-# CONFIG + TEMA ALTO CONTRASTE
+# CONFIG + TEMA ALTO CONTRASTE (sin rojo en UI)
 # ============================================================
 st.set_page_config(
     page_title="Observatorio Económico y Social",
@@ -107,6 +108,44 @@ div[data-testid="stMetric"] [data-testid="stMetricValue"] { color: #F8FAFC !impo
 }
 hr { border-color: #334155 !important; }
 footer { visibility: hidden; }
+
+/* Caja de bienvenida */
+.intro-box {
+    background: linear-gradient(135deg, #0F172A 0%, #1E293B 50%, #312E81 100%);
+    border: 1px solid #334155;
+    border-left: 5px solid #22D3EE;
+    border-radius: 14px;
+    padding: 1.25rem 1.5rem;
+    margin: 0.5rem 0 1.25rem 0;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.25);
+}
+.intro-box h2 {
+    color: #22D3EE !important;
+    margin: 0 0 0.5rem 0;
+    font-size: 1.35rem;
+}
+.intro-box p, .intro-box li {
+    color: #E2E8F0 !important;
+    line-height: 1.55;
+    margin: 0.35rem 0;
+}
+.intro-box .tag {
+    display: inline-block;
+    background: #164E63;
+    color: #A5F3FC !important;
+    border-radius: 999px;
+    padding: 0.15rem 0.65rem;
+    font-size: 0.8rem;
+    margin: 0.15rem 0.25rem 0.15rem 0;
+}
+.tip-box {
+    background: #111827;
+    border: 1px solid #374151;
+    border-radius: 10px;
+    padding: 0.85rem 1rem;
+    margin-bottom: 0.9rem;
+    color: #CBD5E1 !important;
+}
 </style>
 """, unsafe_allow_html=True)
 
@@ -349,7 +388,7 @@ def style_fig(fig):
     return fig
 
 # ============================================================
-# MÓDULOS ANALÍTICOS
+# MÓDULOS ANALÍTICOS (sin cambios de lógica)
 # ============================================================
 def eda(DF_LONG, PANEL, lista_inds, deptos, inds, a1, a2):
     d = filtrar(DF_LONG, deptos, inds or lista_inds, a1, a2)
@@ -820,9 +859,10 @@ anios_ok = anios_count[anios_count >= 2].index
 a1_def = int(min(anios_ok)) if len(anios_ok) else max(amin, 2015)
 a2_def = int(max(anios_ok)) if len(anios_ok) else amax
 
+# ---------- Encabezado + introducción ----------
 st.markdown(
     """
-    <h1 style="color:#22D3EE; margin-bottom:0.2rem;">
+    <h1 style="color:#22D3EE; margin-bottom:0.15rem;">
         🇨🇴 Observatorio Económico y Social
     </h1>
     <p style="color:#94A3B8; margin-top:0;">
@@ -831,29 +871,98 @@ st.markdown(
     """,
     unsafe_allow_html=True,
 )
-st.caption(
-    f"Indicadores: {', '.join(lista_inds)} · Periodo: {amin}–{amax} · "
-    f"Rango recomendado: {a1_def}–{a2_def}"
+
+st.markdown(
+    f"""
+    <div class="intro-box">
+        <h2>👋 Bienvenida / Bienvenido</h2>
+        <p>
+            Esta plataforma reúne <b>indicadores oficiales de Colombia</b> (datos.gov.co)
+            para explorar la economía y la sociedad a nivel departamental, con énfasis en
+            <b>Nariño</b>. Puedes describir datos, mapear patrones espaciales, estimar modelos
+            de series de tiempo, entrenar algoritmos de aprendizaje y simular escenarios de política.
+        </p>
+        <p><b>¿Cómo empezar?</b></p>
+        <ol>
+            <li>Ajusta en la barra lateral el <b>departamento</b>, los <b>indicadores</b> y el <b>rango de años</b>.</li>
+            <li>Elige una pestaña según tu objetivo (EDA, mapas, VAR, ML, simulación o Focus Nariño).</li>
+            <li>Pulsa el botón de cada módulo; los resultados aparecen debajo con gráficos interactivos.</li>
+        </ol>
+        <p>
+            <span class="tag">Periodo cargado: {amin}–{amax}</span>
+            <span class="tag">Años recomendados: {a1_def}–{a2_def}</span>
+            <span class="tag">{len(lista_inds)} indicadores</span>
+            <span class="tag">{len(lista_deptos)} departamentos</span>
+            <span class="tag">Solo datos reales</span>
+        </p>
+    </div>
+    """,
+    unsafe_allow_html=True,
 )
 
+with st.expander("📘 Guía rápida de módulos (qué hace cada pestaña)", expanded=False):
+    st.markdown("""
+| Pestaña | Para qué sirve | Tip práctico |
+|--------|----------------|--------------|
+| **EDA · PCA · Clustering** | Describir distribuciones, correlaciones, reducir dimensiones y agrupar departamentos | Usa el rango de años recomendado para que coincidan más indicadores |
+| **Econometría espacial** | Ver el mapa y medir si hay concentración geográfica (Moran / LISA) | Si un año no tiene datos, la app elige el más cercano disponible |
+| **Series de tiempo** | VAR / VECM, estacionariedad (ADF) e impulso-respuesta | Elige 2–3 indicadores con historia larga en el mismo departamento |
+| **ML & XAI** | Predecir con Ridge, Lasso, SVR y MLP; interpretar importancia de variables | Define un *target* (p. ej. PIB) y predictores complementarios |
+| **Simulador** | Escenarios *what-if*: shock en un indicador y respuesta en otro | Prueba Recursos_DNP → PIB en Nariño |
+| **Focus Nariño** | Tablero ejecutivo: Nariño vs promedio nacional y variación anual | Ideal para reportes y presentaciones del seminario |
+    """)
+
+with st.expander("📦 Fuentes e indicadores cargados", expanded=False):
+    st.markdown(f"""
+**Origen:** APIs SODA de [datos.gov.co](https://www.datos.gov.co) (PIB, Homicidios MinDefensa,
+Recursos DNP, cobertura/matrícula educativa y matrícula superior).
+
+**Indicadores activos:** `{', '.join(lista_inds)}`
+
+**Nota didáctica:** no todos los indicadores cubren los mismos años. Si un módulo avisa
+“pocos datos”, amplía el rango o reduce el número de variables seleccionadas.
+    """)
+    cov = DF_LONG.groupby("indicador").agg(
+        Filas=("valor", "count"),
+        Año_mín=("anio", "min"),
+        Año_máx=("anio", "max"),
+        Departamentos=("departamento", "nunique"),
+    ).reset_index()
+    st.dataframe(cov, width="stretch", hide_index=True)
+
+# ---------- Sidebar ----------
 with st.sidebar:
-    st.header("Controles")
+    st.header("🎛️ Panel de control")
+    st.caption("Filtros globales para casi todos los módulos")
     depto = st.multiselect(
         "Departamento(s)",
         ["Todos"] + lista_deptos,
-        default=["Nariño"] if "Nariño" in lista_deptos else ["Todos"]
+        default=["Nariño"] if "Nariño" in lista_deptos else ["Todos"],
+        help="Puedes seleccionar varios. 'Todos' incluye el país completo en EDA."
     )
-    inds = st.multiselect("Indicadores", lista_inds, default=lista_inds)
+    inds = st.multiselect(
+        "Indicadores", lista_inds, default=lista_inds,
+        help="Desmarca los que no quieras usar en EDA o en correlaciones."
+    )
     a1 = st.slider("Año inicial", amin, amax, a1_def, 1)
     a2 = st.slider("Año final", amin, amax, a2_def, 1)
-    anio_m = st.slider("Año mapa / Moran", amin, amax, anio_default, 1)
-    k = st.slider("K clusters", 2, 6, 3, 1)
-    ar = st.slider("Alpha Ridge", 0.01, 30.0, 1.0, 0.1)
-    al = st.slider("Alpha Lasso", 0.001, 3.0, 0.1, 0.01)
-    lags = st.slider("Lags VAR", 1, 4, 2, 1)
-    shock = st.slider("Shock %", -40, 40, 10, 1)
-    anios_s = st.slider("Años proyección", 3, 8, 5, 1)
+    anio_m = st.slider("Año mapa / Moran", amin, amax, anio_default, 1,
+                       help="Si no hay dato ese año, se usa el más reciente disponible.")
+    st.markdown("---")
+    st.subheader("Parámetros de modelos")
+    k = st.slider("K clusters (K-Means)", 2, 6, 3, 1)
+    ar = st.slider("Alpha Ridge", 0.01, 30.0, 1.0, 0.1,
+                   help="Mayor alpha = más regularización (coeficientes más pequeños).")
+    al = st.slider("Alpha Lasso", 0.001, 3.0, 0.1, 0.01,
+                   help="Lasso puede llevar coeficientes exactamente a cero (selección de variables).")
+    lags = st.slider("Lags VAR", 1, 4, 2, 1,
+                     help="Se ajusta automáticamente si hay pocas observaciones.")
+    shock = st.slider("Shock % (simulación)", -40, 40, 10, 1)
+    anios_s = st.slider("Años de proyección", 3, 8, 5, 1)
+    st.markdown("---")
+    st.caption("💡 Tip: empieza por **Focus Nariño** y luego profundiza en EDA o simulación.")
 
+# ---------- Tabs ----------
 tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs([
     "📊 EDA · PCA · Clustering",
     "🗺️ Econometría Espacial",
@@ -864,41 +973,67 @@ tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs([
 ])
 
 with tab1:
+    st.markdown(
+        '<div class="tip-box">📚 <b>Análisis exploratorio:</b> resume la forma de los datos '
+        '(media, asimetría, normalidad). <b>PCA</b> resume varios indicadores en 2 ejes. '
+        '<b>K-Means</b> agrupa departamentos similares.</div>',
+        unsafe_allow_html=True,
+    )
     c1, c2, c3 = st.columns(3)
     run_eda = c1.button("EDA + Correlación", type="primary", key="b1")
     run_pca = c2.button("PCA + Biplot", type="primary", key="b2")
     run_km = c3.button("K-Means", type="primary", key="b3")
     if run_eda:
-        txt, fig = eda(DF_LONG, PANEL, lista_inds, depto, inds, a1, a2)
+        with st.spinner("Calculando estadísticos y correlaciones…"):
+            txt, fig = eda(DF_LONG, PANEL, lista_inds, depto, inds, a1, a2)
         st.markdown(txt)
         if fig is not None:
             st.plotly_chart(fig, width="stretch")
+            st.caption("Valores cercanos a 1 o −1 indican relación lineal fuerte entre indicadores.")
     if run_pca:
-        txt, fig = pca_fn(PANEL, a1, a2)
+        with st.spinner("Ejecutando PCA…"):
+            txt, fig = pca_fn(PANEL, a1, a2)
         st.markdown(txt)
         if fig is not None:
             st.plotly_chart(fig, width="stretch")
+            st.caption("La estrella cian marca a Nariño. Las flechas son las cargas de cada indicador.")
     if run_km:
-        txt, fig = kmeans_fn(PANEL, a1, a2, k)
+        with st.spinner("Agrupando departamentos…"):
+            txt, fig = kmeans_fn(PANEL, a1, a2, k)
         st.markdown(txt)
         if fig is not None:
             st.plotly_chart(fig, width="stretch")
 
 with tab2:
+    st.markdown(
+        '<div class="tip-box">🗺️ <b>Mapa coroplético:</b> compara departamentos en un año. '
+        '<b>Moran / LISA:</b> indica si valores altos (o bajos) se agrupan en el espacio.</div>',
+        unsafe_allow_html=True,
+    )
     ind_m = st.selectbox("Indicador espacial", lista_inds, index=0, key="ind_m")
     c1, c2 = st.columns(2)
     run_mapa = c1.button("Mapa / Barras", type="primary", key="bm")
     run_moran = c2.button("Moran + LISA", type="primary", key="bmor")
     if run_mapa:
-        fig = mapa_fn(DF_LONG, GEOJSON, ind_m, anio_m)
+        with st.spinner("Generando mapa…"):
+            fig = mapa_fn(DF_LONG, GEOJSON, ind_m, anio_m)
         st.plotly_chart(fig, width="stretch")
+        st.caption("Si el GeoJSON no coincide, se muestra un ranking en barras (siempre legible).")
     if run_moran:
-        txt, fig = moran_fn(DF_LONG, ind_m, anio_m)
+        with st.spinner("Estimando autocorrelación espacial…"):
+            txt, fig = moran_fn(DF_LONG, ind_m, anio_m)
         st.markdown(txt)
         if fig is not None:
             st.plotly_chart(fig, width="stretch")
+            st.caption("HH = concentraciones altas; LL = concentraciones bajas. p-sim < 0.05 sugiere evidencia espacial.")
 
 with tab3:
+    st.markdown(
+        '<div class="tip-box">📈 <b>VAR</b> modela varias series juntas e impulso-respuesta. '
+        '<b>VECM</b> se usa cuando hay cointegración (relaciones de largo plazo). '
+        'ADF prueba si una serie es estacionaria.</div>',
+        unsafe_allow_html=True,
+    )
     d_ts = st.selectbox(
         "Departamento", lista_deptos,
         index=lista_deptos.index("Nariño") if "Nariño" in lista_deptos else 0,
@@ -910,14 +1045,20 @@ with tab3:
     )
     tipo = st.radio("Modelo", ["VAR", "VECM"], horizontal=True, key="tipo")
     if st.button("Estimar modelo", type="primary", key="bts"):
-        txt, fig = var_fn(DF_LONG, d_ts, i_ts, lags, tipo)
+        with st.spinner(f"Estimando {tipo}…"):
+            txt, fig = var_fn(DF_LONG, d_ts, i_ts, lags, tipo)
         st.markdown(txt)
         if fig is not None:
             st.plotly_chart(fig, width="stretch")
 
 with tab4:
+    st.markdown(
+        '<div class="tip-box">🤖 <b>Ridge / Lasso</b> (regularización), <b>SVR</b> (no lineal) y '
+        '<b>MLP</b> (red neuronal). <b>XAI</b> ordena qué variables importan más en la predicción.</div>',
+        unsafe_allow_html=True,
+    )
     tgt = st.selectbox(
-        "Target", lista_inds,
+        "Variable objetivo (target)", lista_inds,
         index=lista_inds.index("PIB") if "PIB" in lista_inds else 0, key="tgt"
     )
     prd = st.multiselect(
@@ -928,47 +1069,66 @@ with tab4:
     run_ml = c1.button("Entrenar ML", type="primary", key="bml")
     run_xai = c2.button("XAI", type="primary", key="bx")
     if run_ml:
-        txt, fig = ml_fn(PANEL, tgt, prd, a1, a2, ar, al)
+        with st.spinner("Entrenando modelos…"):
+            txt, fig = ml_fn(PANEL, tgt, prd, a1, a2, ar, al)
         st.markdown(txt)
         if fig is not None:
             st.plotly_chart(fig, width="stretch")
+            st.caption("R² cercano a 1 = mejor ajuste en el conjunto de prueba. Compara RMSE entre modelos.")
     if run_xai:
-        txt, fig = xai_fn(PANEL, tgt, prd, a1, a2)
+        with st.spinner("Calculando importancia…"):
+            txt, fig = xai_fn(PANEL, tgt, prd, a1, a2)
         st.markdown(txt)
         if fig is not None:
             st.plotly_chart(fig, width="stretch")
 
 with tab5:
+    st.markdown(
+        '<div class="tip-box">🎯 <b>Simulación de política:</b> aumenta o reduce un indicador '
+        '(p. ej. inversión DNP) y observa la trayectoria proyectada de otro (p. ej. PIB).</div>',
+        unsafe_allow_html=True,
+    )
     ds = st.selectbox(
         "Departamento", lista_deptos,
         index=lista_deptos.index("Nariño") if "Nariño" in lista_deptos else 0,
         key="ds"
     )
     is_ = st.selectbox(
-        "Indicador shock", lista_inds,
+        "Indicador del shock", lista_inds,
         index=lista_inds.index("Recursos_DNP") if "Recursos_DNP" in lista_inds else 0,
         key="is_"
     )
     ir = st.selectbox(
-        "Indicador respuesta", lista_inds,
+        "Indicador de respuesta", lista_inds,
         index=lista_inds.index("PIB") if "PIB" in lista_inds else 0,
         key="ir"
     )
+    st.info(f"Escenario actual: shock de **{shock:+d}%** en **{is_}** → efecto sobre **{ir}** en **{ds}** ({anios_s} años).")
     if st.button("Simular", type="primary", key="bs"):
-        txt, fig = sim_fn(DF_LONG, ds, is_, ir, shock, anios_s)
+        with st.spinner("Proyectando escenario…"):
+            txt, fig = sim_fn(DF_LONG, ds, is_, ir, shock, anios_s)
         st.markdown(txt)
         if fig is not None:
             st.plotly_chart(fig, width="stretch")
+            st.caption("Línea discontinua = proyección base; línea violeta = escenario con shock.")
 
 with tab6:
+    st.markdown(
+        '<div class="tip-box">📍 <b>Focus Nariño:</b> tablero ejecutivo con último valor, '
+        "variación interanual y comparación con el promedio nacional.</div>",
+        unsafe_allow_html=True,
+    )
     if st.button("Actualizar dashboard Nariño", type="primary", key="bn"):
-        txt, fig = focus_narino(DF_LONG, lista_inds)
+        with st.spinner("Construyendo tablero de Nariño…"):
+            txt, fig = focus_narino(DF_LONG, lista_inds)
         st.markdown(txt)
         if fig is not None:
             st.plotly_chart(fig, width="stretch")
+        st.success("Listo. Puedes usar esta vista para el informe del seminario o una presentación rápida.")
 
 st.markdown("---")
 st.caption(
-    "Streamlit · Solo datos reales · EDA · PCA · Clustering · Mapas · Moran/LISA · "
-    "VAR/VECM · Ridge/Lasso/SVR/MLP · XAI · Simulación · Foco Nariño"
+    "Observatorio · Solo datos reales (datos.gov.co) · EDA · PCA · Clustering · Mapas · "
+    "Moran/LISA · VAR/VECM · Ridge/Lasso/SVR/MLP · XAI · Simulación · Foco Nariño · "
+    "Seminario de Investigación"
 )
